@@ -61,6 +61,10 @@ h1{display:flex;justify-content:space-between;align-items:center;gap:10px}
 footer a{color:#FFBF00}
 .mail{display:block;text-align:center;background:var(--ac);color:var(--on);padding:12px;border-radius:10px;text-decoration:none;margin-top:12px;font-weight:600}
 .hp p{margin:8px 0}
+mark.k{background:rgba(255,191,0,.3);color:inherit;border-radius:5px;padding:1px 6px;font-weight:700;box-shadow:inset 3px 0 0 #FFBF00;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.tr p{margin:3px 0}
+.col{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--bd);border-radius:999px;padding:1px 9px;font-size:.78rem;font-weight:400;color:var(--mu);vertical-align:middle;margin-left:6px}
+.col i{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.25)}
 </style></head><body><main>
 <h1><span>Vineyard Finder & Quiz</span><button id="hb">? Help</button></h1>
 <div class="who" style="margin:-6px 0 12px">Jonathan Döbler, Viticulture and Enology M.Sc., UC Davis, Fall 2026</div>
@@ -115,7 +119,7 @@ footer a{color:#FFBF00}
 const RG=[["France","Burgundy",18],["France","Bordeaux",34],["France","Rhône",32],["Germany","",12],["Switzerland","",2],["Austria","",4],["Hungary","",16],["Italy","Northern Italy",28],["Italy","Central Italy",40],["Italy","Southern Italy",18],["Georgia","",2],["South Africa","",2],["Spain","",28],["Portugal","",34],["Middle East","",2],["USA","UC Davis breeding (Olmo)",60],["USA","Hybrids",8]];
 const JOURNAL=["Barbera","Cabernet franc","Cabernet Sauvignon","Carignane","Chardonnay","Chenin blanc","Durif","Gewurztraminer","Grenache Noir","Cot","Malvasia bianca","Merlot","Muscato bianco","Nebbiolo","Pinot noir","Pinot blanc","Pinot gris","Pinot Meunier","Riesling","Sangiovese","Sauvignon blanc","Syrah","Tempranillo","Trebbiano toscano","Zinfandel/Primitivo"];
 const JN=new Set(JOURNAL);
-const ALT={"Cot":["Malbec"],"Grenache Noir":["Grenache"],"Durif":["Petite Sirah","Petit Syrah"],"Muscato bianco":["Muscat Blanc"],"Zinfandel/Primitivo":["Zinfandel","Primitivo","Tribidrag"]};
+const ALT={"Carignane":["Carignan"],"Chenin blanc":["Steen"],"Cot":["Malbec"],"Grenache Noir":["Grenache","Garnacha Tinta"],"Durif":["Petite Sirah","Petit Syrah"],"Muscato bianco":["Muscat Blanc","Moscato Bianco"],"Trebbiano toscano":["Ugni Blanc","Saint-Émilion"],"Zinfandel/Primitivo":["Zinfandel","Primitivo","Tribidrag"]};
 const RW=`Aligote*2;Auxerrois*2;Chardonnay*2;Gamay Noir*2;Melon*2
 Pinot blanc*2;Pinot gris*2;Pinot Meunier*2;Pinot noir*2;Cabernet franc*2
 Cabernet Sauvignon*2;Carmenere*2;Chenin blanc*2;-*2;Cot*2
@@ -157,6 +161,10 @@ RG.forEach(([co,rg,c])=>{for(let i=0;i<c;i++)reg.push({co,rg,l:co+(rg?" › "+rg
 RW.split("\n").forEach((ln,i)=>{let k=0;ln.split(";").forEach(t=>{const [nm,m]=t.split("*");for(let j=0;j<(+m||1);j++){V.push({row:12+i,vine:++k,c:nm==="-"?"":nm,r:reg[V.length].l,co:reg[V.length].co,rg:reg[V.length].rg})}})});
 const names=[...new Set(V.filter(v=>v.c).map(v=>v.c))].sort((a,b)=>a.localeCompare(b));
 const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+// Berry color category (journal varieties), shown next to the name
+const COLOR={"Barbera":"Red","Cabernet franc":"Red","Cabernet Sauvignon":"Red","Carignane":"Red","Chardonnay":"White","Chenin blanc":"White","Durif":"Red","Gewurztraminer":"Pink","Grenache Noir":"Red","Cot":"Red","Malvasia bianca":"White","Merlot":"Red","Muscato bianco":"White","Nebbiolo":"Red","Pinot noir":"Red","Pinot blanc":"White","Pinot gris":"Grey","Pinot Meunier":"Red","Riesling":"White","Sangiovese":"Red","Sauvignon blanc":"White","Syrah":"Red","Tempranillo":"Red","Trebbiano toscano":"White","Zinfandel/Primitivo":"Red"};
+const CC={Red:"#8e1b3a",White:"#e6d98a",Grey:"#9aa0a6",Pink:"#e39ab0"};
+const colHTML=n=>COLOR[n]?`<span class="col"><i style="background:${CC[COLOR[n]]}"></i>${COLOR[n]}</span>`:"";
 $("names").innerHTML=names.concat(Object.values(ALT).flat()).map(n=>`<option value="${esc(n)}">`).join("");
 // tabs
 function tab(n){[1,2,3].forEach(k=>{$("p"+k).classList.toggle("hide",n!=k);$("t"+k).classList.toggle("on",n==k)})}
@@ -165,26 +173,150 @@ $("t1").onclick=()=>tab(1);$("t2").onclick=()=>tab(2);$("t3").onclick=()=>{tab(3
 $("q").oninput=()=>{const q=norm($("q").value);const out=$("r1");if(!q){out.innerHTML="";return}
  const hit=names.filter(n=>[n,...(ALT[n]||[])].some(a=>norm(a).includes(q)));
  out.innerHTML=hit.length?hit.map(n=>{const vs=V.filter(v=>v.c===n);const by={};vs.forEach(v=>(by[v.row]=by[v.row]||[]).push(v.vine));
-  return `<div class="res" data-t="${esc(n)}" style="cursor:pointer"><b>${esc(n)}</b>${ALT[n]?` <span class="mu">(${ALT[n].join(", ")})</span>`:""}${JN.has(n)?" 📓":""} <span class="mu">· ${[...new Set(vs.map(v=>v.r))].join(", ")} · ${vs.length} vines</span> <span class="go">Traits ›</span><div>${Object.entries(by).map(([r,a])=>`<span class="chip">Row ${r} · Vine ${a.join(", ")}</span>`).join("")}</div></div>`}).join(""):'<p class="mu">No match.</p>'};
+  return `<div class="res" data-t="${esc(n)}" style="cursor:pointer"><b>${esc(n)}</b>${ALT[n]?` <span class="mu">(${ALT[n].join(", ")})</span>`:""}${JN.has(n)?" 📓":""}${colHTML(n)} <span class="mu">· ${[...new Set(vs.map(v=>v.r))].join(", ")} · ${vs.length} vines</span> <span class="go">Traits ›</span><div>${Object.entries(by).map(([r,a])=>`<span class="chip">Row ${r} · Vine ${a.join(", ")}</span>`).join("")}</div></div>`}).join(""):'<p class="mu">No match.</p>'};
 // find by position
 $("row").innerHTML=[...Array(34)].map((_,i)=>`<option value="${12+i}">Row ${12+i}</option>`).join("");
 $("vine").innerHTML=[...Array(10)].map((_,i)=>`<option value="${i+1}">Vine ${i+1}</option>`).join("");
 function pos(){const v=V.find(x=>x.row==$("row").value&&x.vine==$("vine").value);
- $("r2").innerHTML=v?(v.c?`<div data-t="${esc(v.c)}" style="cursor:pointer">${esc(v.c)}<div class="mu" style="font-size:.9rem;font-weight:400">${v.r}</div><div class="go">Identification traits ›</div></div>`:'<span class="mu">empty / unknown</span>'):""}
+ $("r2").innerHTML=v?(v.c?`<div data-t="${esc(v.c)}" style="cursor:pointer">${esc(v.c)}${colHTML(v.c)}<div class="mu" style="font-size:.9rem;font-weight:400">${v.r}</div><div class="go">Identification traits ›</div></div>`:'<span class="mu">empty / unknown</span>'):""}
 $("row").onchange=$("vine").onchange=pos;pos();
 // traits
-const TF=[["leaf","Leaf"],["tip","Growing tip"],["flower","Flower"],["cluster","Fruit / Cluster"]];
-// Add info per variety. Start an entry with "!" to highlight it as KEY IDENTIFIER.
+// Traits per variety (key = exact variety name in the table).
+// Sections: leaf, shoot, cluster = [["Label","text"],...]; flower = "text"; diff = [{v:["other variety"],t:"text"}].
+// Put {{...}} around the key identifier: it is shown highlighted with a star.
+// A section with a single "Other" item is shown without the label. Empty sections are hidden.
 const TR={
-"Chardonnay":{leaf:["Pentagonal","Medium sized","Entire (no lobes)","Open petiolar sinus","!Naked veins in petiolar sinus — very unique, the most important identifier for Chardonnay"],tip:[],flower:[],cluster:["Medium to small clusters","Compact cluster","Cylindrical","Golden color"]}
+"Barbera":{
+ leaf:[["Leaf shape and size","Orbicular; large"],["Lobes","{{5 lobes, deeply lobed}}; lobes may overlap"],["Petiolar sinus","Closed to overlapping"],["Teeth","Large, semi-rounded"],["Leaf hairs","Woolly hairs with some tufted hairs"]],
+ shoot:[["Tendrils","Strong"],["Other","Slender canes; pruning and brush removal are difficult"]],
+ cluster:[["Cluster size","Medium-sized"],["Peduncle and rachis","Long pedicels"],["Berry shape and skin","Long oval"],["Other","Often produces a secondary crop"]],
+ diff:[{v:["Nebbiolo"],t:"Barbera: orbicular, large, deeply lobed, 5 lobes. Nebbiolo: cuneiform, wide central lobe, U-shaped petiolar sinus."},{v:["Sangiovese"],t:"Barbera: large, deeply lobed, 5 lobes, woolly hairs. Sangiovese: 0–3 lobes, mostly glabrous."}]},
+"Cabernet franc":{
+ leaf:[["Leaf shape and size","Pentagonal/circular; very similar to Cabernet Sauvignon"],["Lateral sinuses (superior / inferior)","{{Small teeth at the base of the superior lateral sinuses}}"],["Teeth","Sharper than Cabernet Sauvignon"]],
+ shoot:[["Other","Vigorous; cold hardy, but reacclimates more rapidly than Cabernet Sauvignon"]],
+ cluster:[["Cluster size","Smaller than Cabernet Sauvignon"],["Cluster shape","Mostly cylindrical"],["Cluster compactness","More compact than Cabernet Sauvignon (higher berry set)"],["Other","Otherwise similar to Cabernet Sauvignon"]],
+ diff:[{v:["Cabernet Sauvignon"],t:"Cabernet Franc: sharper teeth, small teeth at the base of the superior lateral sinuses; clusters smaller, more compact, mostly cylindrical. Cabernet Sauvignon: rounded teeth."},{v:["Merlot"],t:"Cabernet Franc: pentagonal/circular, small teeth at the base of the superior lateral sinuses. Merlot: cuneiform, darker green, sharper teeth, no teeth at the base of the sinus."}]},
+"Cabernet Sauvignon":{
+ leaf:[["Leaf shape and size","Pentagonal/circular"],["Lobes","Extra lobes may occur"],["Petiolar sinus","Closed; sometimes overlapping"],["Lateral sinuses (superior / inferior)","Deep sinuses; superior lateral sinuses overlap"],["Teeth","{{Rounded}}, less sharp than Cabernet Franc and Merlot"],["Leaf hairs","Scattered tufted hairs"],["Color and texture","Bullate, rough blade texture"]],
+ shoot:[["Other","Vigorous; mid- to late-season"]],
+ cluster:[["Cluster size","Medium-sized"],["Cluster compactness","Loose to well-filled"],["Peduncle and rachis","Medium-long peduncles"],["Berry size","Small"],["Berry shape and skin","Round; thick skins"],["Berry color","Blue-black"]],
+ diff:[{v:["Cabernet Franc"],t:"Cabernet Sauvignon: rounded teeth. Cabernet Franc: sharper teeth, small teeth at the base of the superior lateral sinuses; clusters smaller, more compact, mostly cylindrical."},{v:["Merlot"],t:"Cabernet Sauvignon: rounded teeth, deep sinuses. Merlot: cuneiform, sharper teeth, darker green, no teeth at the base of the sinus."}]},
+"Carignane":{
+ leaf:[["Leaf shape and size","Very large"],["Lobes","{{5 lobes}}"],["Petiolar sinus","Puckers up at the petiolar junction"],["Teeth","Large, pointy"],["Leaf hairs","Mostly glabrous, with some tufted hairs"]],
+ shoot:[["Other","Very vigorous and very productive"]],
+ cluster:[["Peduncle and rachis","Short peduncles"],["Other","Grey bloom on the fruit"]],
+ diff:[{v:["Grenache"],t:"Carignane: very large, 5 lobes, large pointy teeth. Grenache: large, entire leaf, shallow sinuses, short semi-rounded teeth."},{v:["Zinfandel"],t:"Carignane: very large, 5 lobes, pointy teeth. Zinfandel: cuneiform, U-shaped petiolar sinus, woolly hairs."}]},
+"Chardonnay":{
+ leaf:[["Leaf shape and size","Medium-sized"],["Lobes","3 lobes, or sometimes none"],["Petiolar sinus","Wide; {{naked veins in the sinus}} (also partly visible in Cabernet Sauvignon, but less frequent)"],["Teeth","Short"],["Leaf hairs","Lower surface mostly glabrous, with scattered hairs"],["Color and texture","Bullate surface"]],
+ shoot:[["Other","Early budding and ripening; susceptible to frost injury"]],
+ cluster:[["Cluster compactness","Well-filled to compact"],["Peduncle and rachis","Short peduncles"],["Berry shape and skin","Thin skins"],["Berry color","Yellow-amber"],["Other","Susceptible to bunch rot"]],
+ diff:[{v:["Pinot Noir"],t:"Chardonnay: medium-sized, bullate, short teeth, wide petiolar sinus, lower surface mostly glabrous with scattered hairs. Pinot Noir: pentagonal, shallow sinuses, 3–5 lobes, dark green, thick, bullate, almost no hair."},{v:["Chenin Blanc"],t:"Chardonnay: lower surface mostly glabrous, short teeth, wide petiolar sinus. Chenin Blanc: dense tufted hairs, 3–5 lobes, deep superior lateral sinuses, rounded teeth, red pigmentation at the petiolar junction."}]},
+"Chenin blanc":{
+ leaf:[["Leaf shape and size","Cuneiform"],["Lobes","3–5 lobes"],["Lateral sinuses (superior / inferior)","{{Deep superior lateral sinuses}}"],["Teeth","Rounded, similar to Cabernet Sauvignon"],["Leaf hairs","Dense tufted hairs"],["Color and texture","Bullate, but less than Sauvignon Blanc"],["Other","Red pigmentation at the petiolar junction, most visible on younger leaves and early in the season"]],
+ shoot:[["Other","Vigorous and fertile; early budding; mid-ripening"]],
+ cluster:[["Peduncle and rachis","Short peduncles"],["Berry size","Medium-large"],["Other","Very susceptible to botrytis and Eutypa dieback"]],
+ diff:[{v:["Sauvignon Blanc"],t:"Chenin Blanc: deeper superior lateral sinuses, rounded teeth, ripens later. Sauvignon Blanc: shallow, overlapping sinuses, dense tufted and untufted hairs, more bullate surface, ripens earlier."}]},
+"Gewurztraminer":{
+ leaf:[["Leaf shape and size","Orbicular; medium-sized"],["Lobes","Mostly 3 lobes; entire leaves can occur"],["Petiolar sinus","Overlapping"],["Teeth","Small, semi-rounded"],["Leaf hairs","Dense hairs, mostly non-tufted"],["Color and texture","Very bullate"]],
+ shoot:[["Other","Early budding and ripening; vigorous but not very productive"]],
+ cluster:[["Cluster size","Small"],["Cluster shape","Globular"],["Cluster compactness","Compact, but less than Pinot"],["Peduncle and rachis","Short peduncles"],["Berry color","{{Distinctive tan-pink}}"],["Other","Aromatic, spicy character"]],
+ diff:[{v:["Riesling"],t:"Gewürztraminer: mostly 3 lobes, very bullate, overlapping petiolar sinus, dense mostly non-tufted hairs, tan-pink berries. Riesling: 3–5 lobes, scattered non-tufted hairs, erect hairs on veins, purple petioles and shoot nodes. Both have orbicular leaves and rounded teeth."},{v:["Muscat Blanc"],t:"Gewürztraminer: aroma associated with geraniol and cis-rose oxide. Muscat Blanc: aroma associated with linalool."}]},
+"Grenache Noir":{
+ leaf:[["Leaf shape and size","Large"],["Lobes","{{Entire (unlobed)}}"],["Lateral sinuses (superior / inferior)","Shallow sinuses"],["Teeth","Short, semi-rounded"],["Leaf hairs","Glabrous"],["Color and texture","Smooth, waxy; thick leaf"]],
+ shoot:[["Other","Very late and very productive"]],
+ cluster:[["Cluster size","Large"],["Berry size","Large"]],
+ diff:[{v:["Carignane"],t:"Grenache: large, entire leaf, shallow sinuses, short semi-rounded teeth. Carignane: very large, 5 lobes, large pointy teeth."},{v:["Zinfandel"],t:"Grenache: thick, smooth, waxy, glabrous leaf, shallow sinuses. Zinfandel: cuneiform, U-shaped petiolar sinus, woolly hairs."}]},
+"Cot":{
+ leaf:[["Lobes","3 lobes, or possibly none"],["Petiolar sinus","{{Wide}}"],["Teeth","Medium-sized, very sharp"],["Leaf hairs","Sparse tufted hairs"],["Color and texture","Soft, smooth, waxy"]],
+ shoot:[["Other","Vigorous; late-season; susceptible to coulure (poor fruit set)"]],
+ cluster:[["Berry size","Larger berries"]],
+ diff:[{v:["Cabernet Sauvignon"],t:"Cot: 3 lobes (or none), medium, very sharp teeth, sparse tufted hairs, wide petiolar sinus, smooth and waxy surface. Cabernet Sauvignon: deep sinuses, rounded teeth, closed petiolar sinus, overlapping superior lateral sinuses, rough bullate surface."},{v:["Merlot"],t:"Cot: smooth, waxy, wide petiolar sinus. Merlot: cuneiform, darker green, sharper teeth."}]},
+"Malvasia bianca":{
+ leaf:[["Leaf shape and size","Orbicular"],["Lobes","{{7 lobes}}, deeply lobed with overlapping lobes"],["Petiolar sinus","Closed to overlapping"],["Teeth","Large, rounded"],["Leaf hairs","Almost glabrous"],["Color and texture","Bullate"]],
+ shoot:[["Other","Highly vigorous and highly productive; sunburns easily"]],
+ cluster:[["Cluster size","Large"],["Cluster shape","Long conical"],["Cluster compactness","Well-filled to compact"],["Peduncle and rachis","Long peduncles"],["Berry size","Large"],["Berry shape and skin","Tallow to oily appearance"],["Berry color","Brownish"],["Other","Muscat character"]],
+ diff:[{v:["Muscat Blanc"],t:"Malvasia Bianca: orbicular, deeply lobed, 7 lobes, large rounded teeth; large clusters and berries. Muscat Blanc: orbicular/cuneiform, medium to large, narrow sinuses, pointy saw-like teeth."}]},
+"Merlot":{
+ leaf:[["Leaf shape and size","Cuneiform"],["Lateral sinuses (superior / inferior)","{{No teeth at the base of the sinus}}"],["Teeth","Sharper than Cabernet Sauvignon and Cabernet Franc"],["Color and texture","Darker green than Cabernet Sauvignon and Cabernet Franc"]],
+ shoot:[["Other","Midseason variety"]],
+ cluster:[["Peduncle and rachis","Prominent green rachis"]],
+ diff:[{v:["Cabernet Sauvignon"],t:"Merlot: cuneiform, sharper teeth, darker green, no teeth at the base of the sinus. Cabernet Sauvignon: rounded teeth, deep sinuses."},{v:["Cabernet Franc"],t:"Merlot: cuneiform, darker green, no teeth at the base of the sinus. Cabernet Franc: pentagonal/circular, small teeth at the base of the superior lateral sinuses."},{v:["Cabernet Sauvignon","Cabernet Franc"],t:"Merlot: green shoot tips, no bronze coloration."}]},
+"Muscato bianco":{
+ leaf:[["Leaf shape and size","Orbicular/cuneiform; medium to large"],["Petiolar sinus","Overlapping"],["Lateral sinuses (superior / inferior)","Narrow sinuses"],["Teeth","{{Pointy teeth in two series, like a saw}}"],["Leaf hairs","Mostly glabrous"],["Color and texture","Thin, paper-like leaf"]],
+ shoot:[["Other","Early budding and early ripening; vigorous on own roots, less vigorous when grafted"]],
+ cluster:[["Cluster shape","Elongated"],["Cluster compactness","Well-filled to compact (looser in Muscat of Alexandria)"],["Other","Muscat aroma; used for Muscat-type varietal wines, dessert wines and blending"]],
+ diff:[{v:["Muscat of Alexandria"],t:"Muscat Blanc: well-filled to compact clusters; thin, paper-like, mostly glabrous leaves, pointy saw-like teeth, overlapping petiolar sinus. Muscat of Alexandria: looser clusters."},{v:["Gewürztraminer"],t:"Muscat Blanc: Muscat aroma group, associated with linalool. Gewürztraminer: aromatic group, associated with geraniol and cis-rose oxide."}]},
+"Nebbiolo":{
+ leaf:[["Leaf shape and size","Cuneiform; {{wide central lobe}}"],["Petiolar sinus","U-shaped"],["Lateral sinuses (superior / inferior)","Deep superior lateral sinus; shallow inferior lateral sinus"],["Teeth","Different sizes"],["Leaf hairs","Woolly hairs with some tufted hairs"]],
+ shoot:[["Other","Vigorous; slender, long canes; early budding"]],
+ cluster:[["Other","Bloom covering the berries"]],
+ diff:[{v:["Barbera"],t:"Nebbiolo: cuneiform, wide central lobe, U-shaped petiolar sinus, deep superior and shallow inferior lateral sinuses, teeth of different sizes. Barbera: large, orbicular, deeply lobed, 5 lobes, closed to overlapping petiolar sinus."},{v:["Sangiovese"],t:"Nebbiolo: cuneiform, U-shaped petiolar sinus, woolly hairs. Sangiovese: large, cuneiform, 0–3 lobes, short pointy teeth, mostly glabrous."}]},
+"Pinot noir":{
+ leaf:[["Leaf shape and size","{{Pentagonal}}"],["Lobes","3–5 lobes"],["Lateral sinuses (superior / inferior)","Shallow sinuses"],["Leaf hairs","Almost no hair"],["Color and texture","Dark green; thick, bullate"]],
+ shoot:[["Other","Early budding and early ripening; low to moderate vigor"]],
+ cluster:[["Cluster size","Small"],["Cluster shape","Cylindrical to globular"],["Cluster compactness","Compact"],["Berry size","Small"],["Berry shape and skin","Thick skins"],["Berry color","Blue-black"]],
+ diff:[{v:["Pinot Blanc"],t:"Pinot Noir: red type. Pinot Blanc: non-red type. Separate Pinot types first by color, then by prostrate hair density."},{v:["Pinot Meunier"],t:"Pinot Noir: buds early, susceptible to spring frost. Pinot Meunier: buds later, ripens earlier, more vigorous, less prone to spring frost."}]},
+"Pinot blanc":{
+ leaf:[["Color and texture","Dark green; thick, bullate"]],
+ cluster:[["Cluster size","Small"],["Cluster shape","Cylindrical to globular"],["Cluster compactness","Compact"],["Berry size","Small"],["Berry shape and skin","Thick skins"],["Berry color","{{Non-red}}"],["Other","Higher and more consistent productivity than Pinot Noir"]],
+ diff:[{v:["Pinot Noir"],t:"Pinot Blanc: non-red type. Pinot Noir: red type. Separate Pinot types first by color, then by prostrate hair density."}]},
+"Pinot gris":{
+ leaf:[["Color and texture","Dark green; thick, bullate"]],
+ cluster:[["Cluster size","Small"],["Cluster shape","Cylindrical to globular"],["Cluster compactness","Compact"],["Berry size","Small"],["Berry shape and skin","Thick skins"],["Berry color","{{Pink-purple to dark}} (varies)"],["Other","Lower production and lower acidity than Pinot Noir"]],
+ diff:[{v:["Pinot Noir"],t:"Pinot Gris: berry color ranges from pink-purple to dark. Separate Pinot types first by color, then by prostrate hair density."}]},
+"Pinot Meunier":{
+ leaf:[["Color and texture","Dark green; thick, bullate"]],
+ shoot:[["Other","Higher vigor than Pinot Noir; {{buds later and ripens earlier than Pinot Noir}}; less prone to spring frost"]],
+ cluster:[["Cluster size","Small"],["Cluster shape","Cylindrical to globular"],["Cluster compactness","Compact"],["Berry size","Small"],["Berry shape and skin","Thick skins"],["Berry color","Blue-black"]],
+ diff:[{v:["Pinot Noir"],t:"Pinot Meunier: buds later, ripens earlier, higher vigor, less prone to spring frost. Pinot Noir: buds early, susceptible to spring frost."},{v:["Pinot Blanc"],t:"Pinot Meunier: red type. Pinot Blanc: non-red type."}]},
+"Riesling":{
+ leaf:[["Leaf shape and size","Orbicular"],["Lobes","3–5 lobes"],["Lateral sinuses (superior / inferior)","Inferior lateral sinuses may be shallow"],["Teeth","Rounded, similar to Gewürztraminer"],["Leaf hairs","Scattered, not tufted; erect hairs on veins"],["Color and texture","Bullate"],["Other","{{Purple petioles and shoot nodes}}"]],
+ shoot:[["Other","Late budding; weak to moderate vigor"]],
+ cluster:[["Cluster size","Small"],["Cluster shape","Cylindrical and globular"],["Other","Ripens later than Gewürztraminer; prominent lenticels"]],
+ diff:[{v:["Gewürztraminer"],t:"Riesling: 3–5 lobes, scattered non-tufted hairs, erect hairs on veins, purple petioles and shoot nodes. Gewürztraminer: mostly 3 lobes, very bullate, dense mostly non-tufted hairs, overlapping petiolar sinus, tan-pink berries."},{v:["Muscat Blanc"],t:"Riesling: aromatic, not Muscat. Muscat Blanc: Muscat aroma group, associated with linalool."}]},
+"Sangiovese":{
+ leaf:[["Leaf shape and size","Large; cuneiform"],["Lobes","{{0–3 lobes}}; triangular apical lobe"],["Teeth","Short, pointy"],["Leaf hairs","Mostly glabrous"]],
+ shoot:[["Other","Vigorous, upright growth with sturdy shoots; late ripening"]],
+ cluster:[["Cluster shape","Wide and long conical"],["Berry size","Some clones have very small fruit; fan leaf can produce seedless berries"],["Berry shape and skin","Thin skins"],["Other","Susceptible to Botrytis bunch rot"]],
+ diff:[{v:["Nebbiolo"],t:"Sangiovese: large, cuneiform, 0–3 lobes, short pointy teeth, mostly glabrous. Nebbiolo: wide central lobe, U-shaped petiolar sinus, deep superior lateral sinus, woolly hairs."},{v:["Barbera"],t:"Sangiovese: 0–3 lobes, mostly glabrous. Barbera: deeply lobed, 5 lobes, woolly hairs."}]},
+"Sauvignon blanc":{
+ leaf:[["Leaf shape and size","Cuneiform"],["Lobes","3–5 lobes"],["Lateral sinuses (superior / inferior)","{{Shallow sinuses, with overlap}}"],["Teeth","Rounded"],["Leaf hairs","Dense tufted and untufted hairs"],["Color and texture","Dark green; bullate"],["Other","Red pigmentation at the petiolar junction"]],
+ shoot:[["Other","Very vigorous; ripens earlier than Chenin Blanc"]],
+ cluster:[["Other","Susceptible to bunch rot and trunk diseases"]],
+ diff:[{v:["Chenin Blanc"],t:"Sauvignon Blanc: shallow, overlapping sinuses, dense tufted and untufted hairs, more bullate surface, ripens earlier. Chenin Blanc: deep superior lateral sinuses, dense tufted hairs."}]},
+"Syrah":{
+ leaf:[["Leaf shape and size","Cuneiform"],["Lobes","{{5 lobes}}"],["Petiolar sinus","Open"],["Teeth","Rounded; smaller than Viognier"],["Leaf hairs","Tufted and untufted hairs"],["Color and texture","Bullate"]],
+ shoot:[["Other","Very vigorous, with long, trailing shoots; early-mid-season"]],
+ cluster:[["Other","Berries tend to shrivel when ripe"]],
+ diff:[{v:["Viognier"],t:"Syrah: 5 lobes, cuneiform, open petiolar sinus, bullate, rounded teeth smaller than Viognier's. Viognier: medium, thinner leaves, 3 lobes, rounded teeth larger than Syrah's, tufted hair, open petiolar sinus."}]},
+"Tempranillo":{
+ leaf:[["Lobes","{{Elongated central lobe}}"]],
+ shoot:[["Other","Early budding and early ripening"]],
+ cluster:[["Berry shape and skin","Thick skins"]]},
+"Zinfandel/Primitivo":{
+ leaf:[["Leaf shape and size","Cuneiform; large"],["Petiolar sinus","U-shaped"],["Leaf hairs","Woolly hairs; look for erect hairs on the veins"],["Other","{{Long central lobe with a narrow base}}"]],
+ cluster:[["Cluster size","Medium to large"],["Cluster shape","Cylindrical to long conical"],["Other","Rust-colored stylar scar"]],
+ diff:[{v:["Carignane"],t:"Zinfandel: cuneiform, large, U-shaped petiolar sinus, woolly hairs, long central lobe with a narrow base. Carignane: very large, 5 lobes, large pointy teeth, puckered petiolar junction."},{v:["Grenache"],t:"Zinfandel: cuneiform, U-shaped petiolar sinus, woolly hairs. Grenache: large, entire, thick, smooth, waxy, glabrous leaf."}]}
 };
-function traitsHTML(n,compact){const t=TR[n]||{};if(compact&&!TF.some(([k])=>(t[k]||[]).length))return `<div class="tr mu" style="padding-top:6px">No identification notes yet for ${esc(n)}.</div>`;
- return `<div class="tr">`+TF.map(([k,l])=>{const a=t[k]||[];return `<h4>${l}</h4>`+(a.length?`<ul>${a.map(x=>x[0]==="!"?`<li class="key">${esc(x.slice(1))}</li>`:`<li>${esc(x)}</li>`).join("")}</ul>`:'<div class="none">—</div>')}).join("")+`</div>`}
+const hl=s=>esc(s).replace(/\{\{(.+?)\}\}/g,'<mark class="k">★ $1</mark>');
+const vsLbl=d=>"vs "+d.v.join(" / ");
+function secHTML(title,items){if(!items||!items.length)return "";
+ return `<h4>${title}</h4>`+(items.length===1&&items[0][0]==="Other"?`<p>${hl(items[0][1])}</p>`:`<ul>${items.map(([l,t])=>`<li><b>${l}:</b> ${hl(t)}</li>`).join("")}</ul>`)}
+function traitsHTML(n,o){const t=TR[n]||{},d=!o||o.diff!==false;
+ const h=secHTML("Leaf",t.leaf)+secHTML("Shoot",t.shoot)+(t.flower?`<h4>Flower</h4><p>${hl(t.flower)}</p>`:"")+secHTML("Fruit / Cluster",t.cluster)+(d&&t.diff&&t.diff.length?`<h4>Differential characters</h4><ul>${t.diff.map(x=>`<li><b>${esc(vsLbl(x))}:</b> ${hl(x.t)}</li>`).join("")}</ul>`:"");
+ return h?`<div class="tr">${h}</div>`:`<div class="tr mu" style="padding-top:6px">No identification notes yet for ${esc(n)}.</div>`}
 const resolve=a=>names.find(n=>[n,...n.split("/"),...(ALT[n]||[])].some(x=>norm(x)===a));
-function tcards(c,right,a){let h=`<div class="tcard"><div class="tt">${right?"Identification traits":`Correct: <b>${esc(c)}</b>`}</div>${traitsHTML(c,true)}</div>`;
- if(!right){const w=resolve(a);if(w&&w!==c)h+=`<div class="tcard"><div class="tt">You answered: <b>${esc(w)}</b></div>${traitsHTML(w,true)}</div>`}return h}
+function pairDiff(c,w){const m=(x,y)=>((TR[x]||{}).diff||[]).filter(d=>d.v.some(v=>resolve(norm(v))===y)).map(d=>({o:x,d}));const a=m(c,w);return a.length?a:m(w,c)}
+function tcards(c,right,a){const w=right?null:resolve(a),two=w&&w!==c;
+ const card=(t,n,o)=>`<div class="tcard"><div class="tt">${t}</div>${traitsHTML(n,o)}</div>`;
+ if(right)return card("Identification traits"+colHTML(c),c,{diff:true});
+ let h="";
+ if(two){const pd=pairDiff(c,w);if(pd.length)h+=`<div class="tcard"><div class="tt">Differential characters</div><div class="tr"><ul>${pd.map(({o,d})=>`<li><b>${esc(o)} ${esc(vsLbl(d))}:</b> ${hl(d.t)}</li>`).join("")}</ul></div></div>`}
+ h+=card(`Correct: <b>${esc(c)}</b>${colHTML(c)}`,c,{diff:!two});
+ if(two)h+=card(`You answered: <b>${esc(w)}</b>${colHTML(w)}`,w,{diff:false});
+ return h}
 function openT(n){$("shT").textContent=n;const vs=V.filter(v=>v.c===n);
- $("shB").innerHTML=`<div class="mu">${ALT[n]?"Also: "+ALT[n].join(", ")+" · ":""}${[...new Set(vs.map(v=>v.r))].join(" · ")}${JN.has(n)?" · 📓 Botany journal":""}</div>`+traitsHTML(n);
+ $("shB").innerHTML=`<div class="mu">${colHTML(n)} ${ALT[n]?"Also: "+ALT[n].join(", ")+" · ":""}${[...new Set(vs.map(v=>v.r))].join(" · ")}${JN.has(n)?" · 📓 Botany journal":""}</div>`+traitsHTML(n);
  $("sheet").classList.remove("hide");$("shB").parentNode.scrollTop=0;document.body.style.overflow="hidden"}
 function closeT(){$("sheet").classList.add("hide");document.body.style.overflow=""}
 $("shX").onclick=closeT;$("sheet").onclick=e=>{if(e.target.id==="sheet")closeT()};
@@ -195,13 +327,13 @@ function openHelp(){$("shT").textContent="How to use";
  $("shB").innerHTML=`<div class="tr hp">
 <h4>Find</h4><ul>
 <li>Type a variety to see every row and vine where it grows, plus its region. Synonyms work too (e.g. Malbec, Primitivo).</li>
-<li>Tap a result to open its identification traits: leaf, growing tip, flower and cluster. ★ marks the key identifier.</li>
+<li>Tap a result to open its identification traits: leaf, shoot and cluster, plus differential characters that show how to tell similar varieties apart. The gold ★ marks the key identifier. The color label (red, white, grey, pink) is the berry color.</li>
 <li>Standing in front of a vine? Choose its row and vine number to see what it is, and tap for the traits.</li></ul>
 <h4>Quiz</h4><ul>
 <li>Choose your varieties. The Botany Journal (VEN101A, 📓) is preset. Add more by country or region, or use all/none. Tick "Also ask exam-ready varieties" to review the ones you already know.</li>
 <li>Tap Start and identify "Row · Vine". Type the name (matching suggestions appear above the field) or switch to the dropdown. Enter checks your answer; Enter again goes to the next question.</li>
 <li>💡 Hint shows the region. A correct answer with a hint gives no streak credit.</li>
-<li>After each answer you see the traits of the variety. If you were wrong, you also see the traits of the variety you named, so you can compare.</li></ul>
+<li>After each answer you see the traits of the variety. If you were wrong, you also see how the two varieties differ, followed by the traits of the correct variety and of the one you named.</li></ul>
 <h4>Progress</h4><ul>
 <li>Every variety has a level: <b>Not studied yet</b>, <b>Studied</b>, <b>Almost sure</b> (2–3 correct in a row) and <b>Exam ready</b> (4 correct in a row, no hints).</li>
 <li>Varieties you miss come back more often. A wrong answer sets you back, and exam-ready varieties are no longer asked.</li>
@@ -213,6 +345,9 @@ function openHelp(){$("shT").textContent="How to use";
  $("sheet").classList.remove("hide");$("shB").parentNode.scrollTop=0;document.body.style.overflow="hidden"}
 $("hb").onclick=openHelp;$("fh").onclick=e=>{e.preventDefault();openHelp()};
 // progress store
+// FROZEN FORMAT - do not change (students have saved backup codes):
+// localStorage key "vq_progress_v1"; backup code = JSON object keyed by the exact variety name,
+// value {n:attempts, c:correct, s:streak, w:wrong, t:lastTimestamp}. Never rename existing variety names.
 const KEY="vq_progress_v1",SN=["Not studied yet","Studied","Almost sure","Exam ready"],COL=["#9aa7b8","#FFBF00","#4a90d9","#2f9d62"];
 let P={};try{P=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){P={}}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}};
