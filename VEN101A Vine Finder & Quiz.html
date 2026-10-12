@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Vineyard Finder & Quiz</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f6fa;--card:#fff;--tx:#0f1e33;--mu:#5b6b80;--ac:#022851;--on:#fff;--gold:#FFBF00;--bd:#d5dce7;--ok:#2f7d4f;--no:#b3372f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1729;--card:#10233d;--tx:#eef2f8;--mu:#9fb0c6;--ac:#FFBF00;--on:#022851;--gold:#FFBF00;--bd:#22395a;--ok:#5dbb85;--no:#e8716a}}
+:root[data-theme="dark"]{--bg:#0a1729;--card:#10233d;--tx:#eef2f8;--mu:#9fb0c6;--ac:#FFBF00;--on:#022851;--gold:#FFBF00;--bd:#22395a;--ok:#5dbb85;--no:#e8716a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 "Proxima Nova",system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.35rem;margin:-16px -16px 12px;padding:16px;background:#022851;color:#fff;border-bottom:4px solid #FFBF00}
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tabs button{flex:1}
+button,input,select{font:inherit;color:inherit}
+button{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;cursor:pointer}
+button.on,button.pri{background:var(--ac);color:var(--on);border-color:var(--ac)}
+input,select{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;width:100%}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:14px}
+.card h2{font-size:1rem;margin:0 0 8px}
+.row2{display:flex;gap:8px}.row2>*{flex:1}
+.mu{color:var(--mu);font-size:.9rem}
+.chip{display:inline-block;background:var(--bg);border:1px solid var(--bd);border-radius:999px;padding:3px 10px;margin:3px 4px 0 0;font-size:.9rem}
+.res{border-top:1px solid var(--bd);padding-top:10px;margin-top:10px}
+.big{font-size:1.6rem;font-weight:600;text-align:center;margin:10px 0}
+.reg{border-top:1px solid var(--bd);padding:8px 0}
+.reg label{display:inline-block;margin:3px 10px 3px 0;font-size:.9rem;white-space:nowrap}
+.reg small button{padding:2px 8px;font-size:.8rem;margin-left:4px}
+.ok{color:var(--ok)}.no{color:var(--no)}
+.hide{display:none}
+#sug{border:1px solid var(--bd);border-radius:10px;background:var(--bg);max-height:35vh;overflow:auto;display:flex;flex-direction:column-reverse}
+#bar{position:fixed;left:0;right:0;bottom:var(--kb,0px);z-index:20;display:flex;flex-direction:column;gap:8px;padding:10px max(12px,calc((100vw - 760px)/2 + 12px)) calc(10px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:3px solid var(--gold);box-shadow:0 -4px 14px rgba(0,0,0,.15)}
+#sug:empty{display:none}
+#sug div{padding:9px 12px;cursor:pointer}
+#sug div:hover{background:var(--bg)}
+.who{text-align:center;color:var(--mu);font-size:.9rem}
+footer{margin:20px -16px 0;padding:14px 16px;background:#022851;border-top:4px solid #FFBF00}
+footer.who{color:#fff}
+.chip{border-left:3px solid var(--gold)}
+.card h2,.reg b{color:var(--ac)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tile{text-align:center;border:1px solid var(--bd);border-radius:10px;padding:8px 2px}
+.tile b{display:block;font-size:1.4rem}.tile small{color:var(--mu);font-size:.72rem;line-height:1.1;display:block}
+.pb{display:flex;height:10px;border-radius:6px;overflow:hidden;margin-top:8px;background:var(--bd)}.pb i{display:block}
+textarea{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;width:100%;font:inherit;color:inherit;margin-bottom:8px}
+#bar.hide,#sheet.hide{display:none}
+#sheet{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sh{background:var(--card);width:100%;max-width:760px;max-height:88vh;max-height:88dvh;overflow:auto;border-radius:16px 16px 0 0;padding:0 16px calc(16px + env(safe-area-inset-bottom,0px));border-top:4px solid var(--gold)}
+.shh{position:sticky;top:0;background:var(--card);display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 0 8px;font-size:1.2rem;color:var(--ac)}
+.tr h4{margin:14px 0 4px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ac)}
+.tr ul{margin:0;padding-left:1.1em}.tr li{margin:3px 0}
+.tr li.key{list-style:none;margin:6px 0 6px -1.1em;padding:8px 10px;background:rgba(255,191,0,.22);border-left:4px solid var(--gold);border-radius:8px;font-weight:600}
+.tr li.key::before{content:"★ KEY IDENTIFIER";display:block;font-size:.65rem;letter-spacing:.08em;color:var(--mu);font-weight:700}
+.tr .none{color:var(--mu)}
+.tcard{margin-top:10px;padding:4px 12px 10px;border:1px solid var(--bd);border-radius:12px;background:var(--bg)}
+.tt{font-size:.9rem;padding-top:8px}
+.go{color:var(--ac);font-weight:600;font-size:.9rem;white-space:nowrap}
+h1{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#hb{background:transparent;color:#fff;border:1px solid #FFBF00;padding:6px 12px;font-size:.9rem;white-space:nowrap}
+footer a{color:#FFBF00}
+.mail{display:block;text-align:center;background:var(--ac);color:var(--on);padding:12px;border-radius:10px;text-decoration:none;margin-top:12px;font-weight:600}
+.hp p{margin:8px 0}
+</style></head><body><main>
+<h1><span>Vineyard Finder & Quiz</span><button id="hb">? Help</button></h1>
+<div class="who" style="margin:-6px 0 12px">Jonathan Döbler, Viticulture and Enology M.Sc., UC Davis, Fall 2026</div>
+<div class="tabs"><button id="t1" class="on">Find</button><button id="t2">Quiz</button><button id="t3">Progress</button></div>
+
+<section id="p1">
+<div class="card"><h2>Where is this variety?</h2>
+<input id="q" list="names" placeholder="Type a variety, e.g. Durif" autocomplete="off">
+<div class="mu" style="margin-top:6px">Tap a result to see how to identify it.</div>
+<div id="r1"></div></div>
+<div class="card"><h2>What is this vine?</h2>
+<div class="row2"><select id="row"></select><select id="vine"></select></div>
+<div id="r2" class="big"></div></div>
+</section>
+
+<section id="p2" class="hide">
+<div id="setup" class="card"><h2>Choose varieties to practise</h2>
+<div id="selSum"></div><label class="mu" style="display:block;margin:8px 0"><input type="checkbox" id="incl" style="width:auto"> Also ask exam-ready varieties (review)</label>
+<button id="start" class="pri" style="width:100%;margin-bottom:14px">Start quiz</button>
+<div class="row2" style="margin-bottom:8px"><button id="all">Select all</button><button id="none">Select none</button></div>
+<div class="reg" style="border-top:0"><b>📓 Botany journal (VEN101A)</b> <span class="mu">25 varieties (22 entries, Pinot family = 4)</span>
+<div class="row2" style="margin-top:6px"><button id="jonly">Only journal varieties</button><button id="jadd">Add journal varieties</button></div></div>
+<div id="regs"></div>
+</div>
+<div id="game" class="card hide">
+<div class="mu" id="prog"></div>
+<div class="big" id="ask"></div>
+<div id="hintOut" class="mu"></div>
+<div id="fb" style="margin-top:8px"></div>
+<div class="row2" style="margin-top:14px;align-items:center"><label class="mu" style="flex:2"><input type="checkbox" id="dd" style="width:auto"> Dropdown instead of typing</label><button id="quit">Back to setup</button></div>
+<div id="bar">
+<div class="row2"><button id="hint">💡 Hint</button><button id="chk" class="pri">Check</button><button id="next" class="hide pri">Next →</button></div>
+<div id="sug"></div>
+<input id="ans" placeholder="Start typing a variety…" autocomplete="off" autocapitalize="off" enterkeyhint="go">
+<select id="ansSel" class="hide"></select>
+</div>
+</div>
+</section>
+<datalist id="names"></datalist><datalist id="sel"></datalist>
+<section id="p3" class="hide">
+<div class="card"><h2>All varieties</h2><div id="pAll"></div></div>
+<div class="card"><h2>📓 Botany journal (VEN101A)</h2><div id="pJ"></div></div>
+<div class="card"><h2>Hardest varieties for you</h2><div id="pH"></div></div>
+<div class="card"><h2>Backup</h2><p class="mu" style="margin-top:0">Progress is saved in this browser on this device. Copy the code to keep a backup or to move to another device.</p>
+<textarea id="bk" rows="3" placeholder="Backup code"></textarea>
+<div class="row2"><button id="exp">Show &amp; copy code</button><button id="imp">Load code</button><button id="rst">Reset</button></div></div>
+</section>
+<div id="sheet" class="hide"><div class="sh"><div class="shh"><b id="shT"></b><button id="shX">✕ Close</button></div><div id="shB"></div></div></div>
+<footer class="who">Jonathan Döbler, Viticulture and Enology M.Sc., UC Davis, Fall 2026<br><a href="#" id="fh">Help</a> · <a href="mailto:jdobler@ucdavis.edu?subject=Vineyard%20Finder%20%26%20Quiz">jdobler@ucdavis.edu</a></footer>
+</main>
+<script>
+const RG=[["France","Burgundy",18],["France","Bordeaux",34],["France","Rhône",32],["Germany","",12],["Switzerland","",2],["Austria","",4],["Hungary","",16],["Italy","Northern Italy",28],["Italy","Central Italy",40],["Italy","Southern Italy",18],["Georgia","",2],["South Africa","",2],["Spain","",28],["Portugal","",34],["Middle East","",2],["USA","UC Davis breeding (Olmo)",60],["USA","Hybrids",8]];
+const JOURNAL=["Barbera","Cabernet franc","Cabernet Sauvignon","Carignane","Chardonnay","Chenin blanc","Durif","Gewurztraminer","Grenache Noir","Cot","Malvasia bianca","Merlot","Muscato bianco","Nebbiolo","Pinot noir","Pinot blanc","Pinot gris","Pinot Meunier","Riesling","Sangiovese","Sauvignon blanc","Syrah","Tempranillo","Trebbiano toscano","Zinfandel/Primitivo"];
+const JN=new Set(JOURNAL);
+const ALT={"Cot":["Malbec"],"Grenache Noir":["Grenache"],"Durif":["Petite Sirah","Petit Syrah"],"Muscato bianco":["Muscat Blanc"],"Zinfandel/Primitivo":["Zinfandel","Primitivo","Tribidrag"]};
+const RW=`Aligote*2;Auxerrois*2;Chardonnay*2;Gamay Noir*2;Melon*2
+Pinot blanc*2;Pinot gris*2;Pinot Meunier*2;Pinot noir*2;Cabernet franc*2
+Cabernet Sauvignon*2;Carmenere*2;Chenin blanc*2;-*2;Cot*2
+Folle blance*2;Merlot*2;Muscadelle du Bordelais*2;Petit Manseng*2;Petit Verdot*2
+Sauvignon blanc*2;Sauvignon gris*2;Sauvignon vert*2;Tannat*2;Trousseau gris*2
+Durif;Ungni blanc/Trebbiano;Alicante Bouschet*2;Durif*2;Burger*2;Carignane*2
+Cinsault*2;Counoise*2;Durif*2;Marsanne*2;Mondeuse*2
+Mourvedre*2;Negrette*2;Petit Bouschet*2;Roussanne*2;Syrah*2
+-;Valdepenas;Viognier*2;Gewurztraminer*2;Muscat Ottonel*2;Riesling*2
+Siegerrebe*2;Sylvaner*2;-*2;Chasselas doree*2;Gruner Veltiner*2
+Rotgipfler*2;Blaufrankisch;-*2;Blaufrankisch;Furmint*2;-;Harsalueva
+Kadarka*2;Durif*2;Reisling Italico*2;Szagos feher*2;Arneis*2
+Barbera*2;Biancetta trevigniana*2;Biancello*2;Corvina Veronse*2;Dolcetto*2
+Grignolino*2;Lambrusco*2;Malvasia bianca*2;Muscato bianco*2;Nebbiolo*2
+Picolit*2;Rondinella*2;Sangiovese*2;Bonarda;-;Ciliegiolo*2
+Coda di Volpe*2;Cortese*2;Erbaluce*2;Durif*2;Fiano*2
+Forastera*2;Greco di tufo*2;Mammolo*2;Refosco*2;Sagrantino*2
+Sangiovese*2;Schiopettino*2;Suavis*2;Tocai Friulano*2;Trebbiano toscano*2
+Verdello*2;-;Vermentino;Vespolina*2;Aglicanico*2;Aleatico*2
+Nero d'Avola*2;-;Montepulciano;-*2;Negramaro*2;Negro Amaro*2
+Ribolla gialla*2;Zinfandel/Primitivo*2;Rkatsiteli*2;Pinotage*2;Airen;-
+-;Albarino;Albillo Real*2;Graciano*2;Grenache Noir*2;Juan Garcia*2
+Macabeo*2;Mourvedre*2;Morrastel*2;Palomino*2;Parellada*2
+Pedro Ximenez*2;Tempranillo*2;Verdejo*2;Castelao*2;Cornifesto*2
+Gouveio*2;-*2;Moiutisco de Semente*2;Periquita*2;Souzao*2
+Teroldego*2;Tinta Amarella*2;Tinta Barroca*2;Tinta Cao*2;Tinta Carvalha*2
+Tinta Francisca*2;Tinta Madeira*2;Touriga Nacional*2;Verdelho*2;Viozinho*2
+Thompson Seedless*2;Calzin*2;Carmine*2;Carnelian*2;Centurion*2
+Emerald Reisling*2;Flora*2;Glennel*2;Helena*2;Ruby Cabernet*2
+Symphony*2;Beauty Seedless*2;Blush Seedless*2;Canner*2;Centennial Seedless*2
+Christmas Rose*2;Dawn Seedless*2;Delight*2;Early Muscat*2;Emerald Seedless*2
+Gold*2;July Muscat*2;Perlette*2;Queen*2;-*2
+Ruby Seedless*2;-;Early Niabell(?);Niabell*2;Royalty;-;Rubired*2
+Scarlett*2;thomcord*2;-*2;Catawba*2;Chardonel*2`;
+const $=id=>document.getElementById(id);
+const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const V=[];let reg=[];
+RG.forEach(([co,rg,c])=>{for(let i=0;i<c;i++)reg.push({co,rg,l:co+(rg?" › "+rg:"")})});
+RW.split("\n").forEach((ln,i)=>{let k=0;ln.split(";").forEach(t=>{const [nm,m]=t.split("*");for(let j=0;j<(+m||1);j++){V.push({row:12+i,vine:++k,c:nm==="-"?"":nm,r:reg[V.length].l,co:reg[V.length].co,rg:reg[V.length].rg})}})});
+const names=[...new Set(V.filter(v=>v.c).map(v=>v.c))].sort((a,b)=>a.localeCompare(b));
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+$("names").innerHTML=names.concat(Object.values(ALT).flat()).map(n=>`<option value="${esc(n)}">`).join("");
+// tabs
+function tab(n){[1,2,3].forEach(k=>{$("p"+k).classList.toggle("hide",n!=k);$("t"+k).classList.toggle("on",n==k)})}
+$("t1").onclick=()=>tab(1);$("t2").onclick=()=>tab(2);$("t3").onclick=()=>{tab(3);renderProg()};
+// find by variety
+$("q").oninput=()=>{const q=norm($("q").value);const out=$("r1");if(!q){out.innerHTML="";return}
+ const hit=names.filter(n=>[n,...(ALT[n]||[])].some(a=>norm(a).includes(q)));
+ out.innerHTML=hit.length?hit.map(n=>{const vs=V.filter(v=>v.c===n);const by={};vs.forEach(v=>(by[v.row]=by[v.row]||[]).push(v.vine));
+  return `<div class="res" data-t="${esc(n)}" style="cursor:pointer"><b>${esc(n)}</b>${ALT[n]?` <span class="mu">(${ALT[n].join(", ")})</span>`:""}${JN.has(n)?" 📓":""} <span class="mu">· ${[...new Set(vs.map(v=>v.r))].join(", ")} · ${vs.length} vines</span> <span class="go">Traits ›</span><div>${Object.entries(by).map(([r,a])=>`<span class="chip">Row ${r} · Vine ${a.join(", ")}</span>`).join("")}</div></div>`}).join(""):'<p class="mu">No match.</p>'};
+// find by position
+$("row").innerHTML=[...Array(34)].map((_,i)=>`<option value="${12+i}">Row ${12+i}</option>`).join("");
+$("vine").innerHTML=[...Array(10)].map((_,i)=>`<option value="${i+1}">Vine ${i+1}</option>`).join("");
+function pos(){const v=V.find(x=>x.row==$("row").value&&x.vine==$("vine").value);
+ $("r2").innerHTML=v?(v.c?`<div data-t="${esc(v.c)}" style="cursor:pointer">${esc(v.c)}<div class="mu" style="font-size:.9rem;font-weight:400">${v.r}</div><div class="go">Identification traits ›</div></div>`:'<span class="mu">empty / unknown</span>'):""}
+$("row").onchange=$("vine").onchange=pos;pos();
+// traits
+const TF=[["leaf","Leaf"],["tip","Growing tip"],["flower","Flower"],["cluster","Fruit / Cluster"]];
+// Add info per variety. Start an entry with "!" to highlight it as KEY IDENTIFIER.
+const TR={
+"Chardonnay":{leaf:["Pentagonal","Medium sized","Entire (no lobes)","Open petiolar sinus","!Naked veins in petiolar sinus — very unique, the most important identifier for Chardonnay"],tip:[],flower:[],cluster:["Medium to small clusters","Compact cluster","Cylindrical","Golden color"]}
+};
+function traitsHTML(n,compact){const t=TR[n]||{};if(compact&&!TF.some(([k])=>(t[k]||[]).length))return `<div class="tr mu" style="padding-top:6px">No identification notes yet for ${esc(n)}.</div>`;
+ return `<div class="tr">`+TF.map(([k,l])=>{const a=t[k]||[];return `<h4>${l}</h4>`+(a.length?`<ul>${a.map(x=>x[0]==="!"?`<li class="key">${esc(x.slice(1))}</li>`:`<li>${esc(x)}</li>`).join("")}</ul>`:'<div class="none">—</div>')}).join("")+`</div>`}
+const resolve=a=>names.find(n=>[n,...n.split("/"),...(ALT[n]||[])].some(x=>norm(x)===a));
+function tcards(c,right,a){let h=`<div class="tcard"><div class="tt">${right?"Identification traits":`Correct: <b>${esc(c)}</b>`}</div>${traitsHTML(c,true)}</div>`;
+ if(!right){const w=resolve(a);if(w&&w!==c)h+=`<div class="tcard"><div class="tt">You answered: <b>${esc(w)}</b></div>${traitsHTML(w,true)}</div>`}return h}
+function openT(n){$("shT").textContent=n;const vs=V.filter(v=>v.c===n);
+ $("shB").innerHTML=`<div class="mu">${ALT[n]?"Also: "+ALT[n].join(", ")+" · ":""}${[...new Set(vs.map(v=>v.r))].join(" · ")}${JN.has(n)?" · 📓 Botany journal":""}</div>`+traitsHTML(n);
+ $("sheet").classList.remove("hide");$("shB").parentNode.scrollTop=0;document.body.style.overflow="hidden"}
+function closeT(){$("sheet").classList.add("hide");document.body.style.overflow=""}
+$("shX").onclick=closeT;$("sheet").onclick=e=>{if(e.target.id==="sheet")closeT()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeT()});
+["r1","r2","pH"].forEach(id=>$(id).addEventListener("click",e=>{const t=e.target.closest("[data-t]");if(t)openT(t.dataset.t)}));
+const MAIL="jdobler@ucdavis.edu";
+function openHelp(){$("shT").textContent="How to use";
+ $("shB").innerHTML=`<div class="tr hp">
+<h4>Find</h4><ul>
+<li>Type a variety to see every row and vine where it grows, plus its region. Synonyms work too (e.g. Malbec, Primitivo).</li>
+<li>Tap a result to open its identification traits: leaf, growing tip, flower and cluster. ★ marks the key identifier.</li>
+<li>Standing in front of a vine? Choose its row and vine number to see what it is, and tap for the traits.</li></ul>
+<h4>Quiz</h4><ul>
+<li>Choose your varieties. The Botany Journal (VEN101A, 📓) is preset. Add more by country or region, or use all/none. Tick "Also ask exam-ready varieties" to review the ones you already know.</li>
+<li>Tap Start and identify "Row · Vine". Type the name (matching suggestions appear above the field) or switch to the dropdown. Enter checks your answer; Enter again goes to the next question.</li>
+<li>💡 Hint shows the region. A correct answer with a hint gives no streak credit.</li>
+<li>After each answer you see the traits of the variety. If you were wrong, you also see the traits of the variety you named, so you can compare.</li></ul>
+<h4>Progress</h4><ul>
+<li>Every variety has a level: <b>Not studied yet</b>, <b>Studied</b>, <b>Almost sure</b> (2–3 correct in a row) and <b>Exam ready</b> (4 correct in a row, no hints).</li>
+<li>Varieties you miss come back more often. A wrong answer sets you back, and exam-ready varieties are no longer asked.</li>
+<li>Your progress is saved in this browser on this device only. Use Backup on the Progress tab to copy a code, keep it safe or move it to another device.</li></ul>
+<h4>Tips</h4><ul>
+<li>Works well on a phone: the answer field and buttons stay at the bottom, right above the keyboard.</li>
+<li>Traits are added variety by variety, so many entries are still empty.</li></ul>
+<h4>Contact</h4><p>Questions, a bug, or a trait to add? Write to <b>${MAIL}</b></p></div><a class="mail" href="mailto:${MAIL}?subject=Vineyard%20Finder%20%26%20Quiz">✉ Email me</a>`;
+ $("sheet").classList.remove("hide");$("shB").parentNode.scrollTop=0;document.body.style.overflow="hidden"}
+$("hb").onclick=openHelp;$("fh").onclick=e=>{e.preventDefault();openHelp()};
+// progress store
+const KEY="vq_progress_v1",SN=["Not studied yet","Studied","Almost sure","Exam ready"],COL=["#9aa7b8","#FFBF00","#4a90d9","#2f9d62"];
+let P={};try{P=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){P={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}};
+const st=n=>P[n]||(P[n]={n:0,c:0,s:0,w:0,t:0});
+const status=n=>{const p=P[n];return !p||!p.n?0:p.s>=4?3:p.s>=2?2:1};
+function tiles(l){const c=[0,0,0,0];l.forEach(n=>c[status(n)]++);const t=l.length||1;
+ return `<div class="tiles">${c.map((x,i)=>`<div class="tile" style="border-top:3px solid ${COL[i]}"><b>${x}</b><small>${SN[i]}</small></div>`).join("")}</div><div class="pb">${c.map((x,i)=>`<i style="width:${x/t*100}%;background:${COL[i]}"></i>`).join("")}</div>`}
+function selSum(){$("selSum").innerHTML=`<div class="mu" style="margin-bottom:6px">Your progress · selected varieties (${sel.size})</div>`+tiles([...sel])}
+function renderProg(){$("pAll").innerHTML=tiles(names);$("pJ").innerHTML=tiles(JOURNAL);
+ const h=Object.entries(P).filter(([n,p])=>p.n&&p.w).sort((a,b)=>b[1].w/b[1].n-a[1].w/a[1].n||b[1].w-a[1].w).slice(0,8);
+ $("pH").innerHTML=h.length?h.map(([n,p])=>`<div class="res" data-t="${esc(n)}" style="cursor:pointer"><b>${esc(n)}</b> <span class="mu">· ${p.w} wrong of ${p.n} · ${SN[status(n)]}</span></div>`).join(""):'<p class="mu">Nothing yet. Start a quiz!</p>'}
+$("exp").onclick=()=>{$("bk").value=JSON.stringify(P);$("bk").select();try{document.execCommand("copy")}catch(e){}};
+$("imp").onclick=()=>{try{const o=JSON.parse($("bk").value);if(!o||typeof o!=="object"||!Object.values(o).every(p=>p&&typeof p.n==="number"))throw 0;P=o;save();renderProg();selSum();alert("Progress loaded.")}catch(e){alert("That backup code is not valid.")}};
+$("rst").onclick=()=>{if(confirm("Delete all progress?")){P={};save();renderProg();selSum()}};
+// quiz setup
+const sel=new Set(JOURNAL);
+function drawRegs(){const cs=[...new Set(RG.map(r=>r[0]))];
+$("regs").innerHTML=cs.map(co=>{const rs=RG.filter(r=>r[0]===co);
+ const sub=f=>[...new Set(V.filter(f).map(v=>v.c).filter(Boolean))].sort().map(n=>`<label><input type="checkbox" style="width:auto" data-n="${esc(n)}" ${sel.has(n)?"checked":""}> ${esc(n)}${JN.has(n)?" 📓":""}</label>`).join("");
+ const bt=(rg)=>`<small><button data-co="${co}"${rg?` data-rg="${rg}"`:""} data-m="1">all</button><button data-co="${co}"${rg?` data-rg="${rg}"`:""} data-m="0">none</button></small>`;
+ return `<div class="reg"><b>${co}</b>${bt("")}`+(rs.length>1||rs[0][1]?rs.map(([,rg])=>`<div style="margin:6px 0 0 10px"><span class="mu">${rg}</span>${bt(rg)}<div>${sub(v=>v.co===co&&v.rg===rg)}</div></div>`).join(""):`<div>${sub(v=>v.co===co)}</div>`)+`</div>`}).join("");selSum()}
+drawRegs();
+$("regs").onchange=e=>{const n=e.target.dataset.n;if(n!=null)e.target.checked?sel.add(n):sel.delete(n);selSum()};
+$("regs").onclick=e=>{const d=e.target.dataset;if(!d.co)return;V.filter(v=>v.c&&v.co===d.co&&(d.rg==null||v.rg===d.rg)).forEach(v=>d.m==="1"?sel.add(v.c):sel.delete(v.c));drawRegs()};
+$("jonly").onclick=()=>{sel.clear();JOURNAL.forEach(n=>sel.add(n));drawRegs()};
+$("jadd").onclick=()=>{JOURNAL.forEach(n=>sel.add(n));drawRegs()};
+$("all").onclick=()=>{names.forEach(n=>sel.add(n));drawRegs()};
+$("none").onclick=()=>{sel.clear();drawRegs()};
+// quiz
+let cur=null,last=null,qn=0,ok=0,done=false,hinted=false,incl=false;
+const weight=n=>{const p=P[n];if(!p||!p.n)return 3;return[4,3,2,1.5,1][Math.min(p.s,4)]*(1+p.w/p.n)};
+const left=()=>[...sel].filter(n=>status(n)<3).length;
+function pick(){let c=[...sel].filter(n=>incl||status(n)<3);if(c.length>1)c=c.filter(n=>n!==last);if(!c.length)return null;
+ let r=Math.random()*c.reduce((a,n)=>a+weight(n),0);const n=c.find(n=>(r-=weight(n))<=0)||c[0];last=n;
+ const vs=V.filter(v=>v.c===n);return vs[Math.random()*vs.length|0]}
+function ui(){["chk","hint"].forEach(x=>{$(x).classList.remove("hide");$(x).disabled=false});$("dd").onchange()}
+function nextQ(){cur=pick();if(!cur){finish();return}
+ done=false;hinted=false;qn++;$("prog").textContent=`Question ${qn} · Correct: ${ok} · Left to master: ${left()}`;
+ $("ask").textContent=`Row ${cur.row} · Vine ${cur.vine}`;$("ans").value="";$("ansSel").value="";$("sug").innerHTML="";$("hintOut").textContent="";$("fb").innerHTML="";
+ $("next").classList.add("hide");$("chk").classList.remove("hide");$("chk").disabled=false;$("hint").disabled=false;$("ans").focus()}
+function finish(){$("bar").classList.add("hide");$("ask").textContent="🎉 Nothing left to learn here";$("hintOut").textContent="";
+ $("fb").innerHTML=`All selected varieties are exam ready. This session: ${ok} correct of ${qn}.<div style="margin-top:8px"><button id="again" class="pri">Review them anyway</button></div>`}
+$("fb").onclick=e=>{if(e.target.id==="again"){incl=true;$("bar").classList.remove("hide");ui();nextQ()}};
+$("start").onclick=()=>{if(!sel.size){alert("Select at least one variety.");return}
+ incl=$("incl").checked;qn=0;ok=0;last=null;
+ $("ansSel").innerHTML='<option value="">Choose variety…</option>'+[...sel].sort((a,b)=>a.localeCompare(b)).map(n=>`<option>${esc(n)}</option>`).join("");
+ $("setup").classList.add("hide");$("game").classList.remove("hide");$("bar").classList.remove("hide");ui();nextQ()};
+$("hint").onclick=()=>{if(done)return;hinted=true;$("hintOut").textContent="Region: "+cur.r};
+function check(){if(done)return;const q=cur;const a=norm($("dd").checked?$("ansSel").value:$("ans").value);if(!a)return;
+ const right=[q.c,...q.c.split("/"),...(ALT[q.c]||[])].map(norm).includes(a);
+ done=true;$("sug").innerHTML="";const p=st(q.c),o=status(q.c);p.n++;p.t=Date.now();
+ if(right){p.c++;ok++;if(!hinted)p.s++}else{p.w++;p.s=p.s>>1}
+ save();const nw=status(q.c);
+ $("fb").innerHTML=(right?`<b class="ok">✓ Correct!</b> ${esc(q.c)}`:`<b class="no">✗ Not quite.</b> It was <b>${esc(q.c)}</b>`)+` <span class="mu">(${q.r})</span><div class="mu">${SN[nw]}${nw>o?" ⬆":nw<o?" ⬇":""}${hinted&&right?" · hint used, no streak credit":""}</div>`+tcards(q.c,right,a);
+ $("prog").textContent=`Question ${qn} · Correct: ${ok} · Left to master: ${left()}`;
+ $("chk").classList.add("hide");$("hint").disabled=true;$("next").classList.remove("hide")}
+$("chk").onclick=check;
+$("next").onclick=nextQ;
+$("dd").onchange=()=>{$("ans").classList.toggle("hide",$("dd").checked);$("ansSel").classList.toggle("hide",!$("dd").checked)};
+$("ans").oninput=()=>{if(done)return;const q=norm($("ans").value);if(!q){$("sug").innerHTML="";return}
+ const hit=[...sel].filter(n=>[n,...(ALT[n]||[])].some(a=>norm(a).includes(q))).sort((a,b)=>(norm(b).startsWith(q)-norm(a).startsWith(q))||a.localeCompare(b)).slice(0,5);
+ $("sug").innerHTML=hit.map(n=>`<div data-n="${esc(n)}">${esc(n)}</div>`).join("")};
+$("sug").onpointerdown=e=>{const n=e.target.dataset.n;if(!n)return;e.preventDefault();$("ans").value=n;$("sug").innerHTML="";$("ans").focus()};
+$("ans").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();done?$("next").click():check()}};
+$("quit").onclick=()=>{$("game").classList.add("hide");$("setup").classList.remove("hide");$("bar").classList.remove("hide");ui();selSum()};
+$("bar").onpointerdown=e=>{if(e.target.closest("button"))e.preventDefault()};
+const vv=window.visualViewport,kb=()=>document.documentElement.style.setProperty("--kb",Math.max(0,innerHeight-vv.height-vv.offsetTop)+"px");
+if(vv){vv.addEventListener("resize",kb);vv.addEventListener("scroll",kb)}
+new ResizeObserver(()=>{document.body.style.paddingBottom=$("bar").offsetHeight+"px"}).observe($("bar"));
+</script></body></html>
