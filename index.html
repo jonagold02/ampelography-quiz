@@ -72,7 +72,7 @@ mark.k{background:rgba(255,191,0,.3);color:inherit;border-radius:5px;padding:1px
 
 <section id="p1">
 <div class="card"><h2>Where is this variety?</h2>
-<input id="q" list="names" placeholder="Type a variety, e.g. Durif" autocomplete="off">
+<input id="q" placeholder="Type a variety, e.g. Durif" autocomplete="off" autocapitalize="off" spellcheck="false">
 <div class="mu" style="margin-top:6px">Tap a result to see how to identify it.</div>
 <div id="r1"></div></div>
 <div class="card"><h2>What is this vine?</h2>
@@ -98,12 +98,11 @@ mark.k{background:rgba(255,191,0,.3);color:inherit;border-radius:5px;padding:1px
 <div id="bar">
 <div class="row2"><button id="hint">💡 Hint</button><button id="chk" class="pri">Check</button><button id="next" class="hide pri">Next →</button></div>
 <div id="sug"></div>
-<input id="ans" placeholder="Start typing a variety…" autocomplete="off" autocapitalize="off" enterkeyhint="go">
+<input id="ans" placeholder="Start typing a variety…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
 <select id="ansSel" class="hide"></select>
 </div>
 </div>
 </section>
-<datalist id="names"></datalist><datalist id="sel"></datalist>
 <section id="p3" class="hide">
 <div class="card"><h2>All varieties</h2><div id="pAll"></div></div>
 <div class="card"><h2>📓 Botany journal (VEN101A)</h2><div id="pJ"></div></div>
@@ -165,7 +164,6 @@ const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const COLOR={"Barbera":"Red","Cabernet franc":"Red","Cabernet Sauvignon":"Red","Carignane":"Red","Chardonnay":"White","Chenin blanc":"White","Durif":"Red","Gewurztraminer":"Pink","Grenache Noir":"Red","Cot":"Red","Malvasia bianca":"White","Merlot":"Red","Muscato bianco":"White","Nebbiolo":"Red","Pinot noir":"Red","Pinot blanc":"White","Pinot gris":"Grey","Pinot Meunier":"Red","Riesling":"White","Sangiovese":"Red","Sauvignon blanc":"White","Syrah":"Red","Tempranillo":"Red","Trebbiano toscano":"White","Zinfandel/Primitivo":"Red"};
 const CC={Red:"#8e1b3a",White:"#e6d98a",Grey:"#9aa0a6",Pink:"#e39ab0"};
 const colHTML=n=>COLOR[n]?`<span class="col"><i style="background:${CC[COLOR[n]]}"></i>${COLOR[n]}</span>`:"";
-$("names").innerHTML=names.concat(Object.values(ALT).flat()).map(n=>`<option value="${esc(n)}">`).join("");
 // tabs
 function tab(n){[1,2,3].forEach(k=>{$("p"+k).classList.toggle("hide",n!=k);$("t"+k).classList.toggle("on",n==k)})}
 $("t1").onclick=()=>tab(1);$("t2").onclick=()=>tab(2);$("t3").onclick=()=>{tab(3);renderProg()};
