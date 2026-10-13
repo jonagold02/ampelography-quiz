@@ -417,4 +417,32 @@ $("bar").onpointerdown=e=>{if(e.target.closest("button"))e.preventDefault()};
 const vv=window.visualViewport,kb=()=>document.documentElement.style.setProperty("--kb",Math.max(0,innerHeight-vv.height-vv.offsetTop)+"px");
 if(vv){vv.addEventListener("resize",kb);vv.addEventListener("scroll",kb)}
 new ResizeObserver(()=>{document.body.style.paddingBottom=$("bar").offsetHeight+"px"}).observe($("bar"));
+
+// ---- Live trait descriptors from Google Sheet (published CSV). Built-in TR stays as fallback. Progress storage is untouched. ----
+const SHEET_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTeeikdxSEgxgN7W2Lr5Pz3wirq-jiKmRTwhFX3FDC7Lny-OP8UhPJAXd5606LNi_SuDHCGaOfhfLfW/pub?output=csv";
+const TCACHE="vq_traits_cache_v1";
+function parseCSV(t){const r=[];let row=[],f="",q=false;t=t.replace(/^﻿/,"");
+ for(let i=0;i<t.length;i++){const c=t[i];
+  if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+  else if(c==='"')q=true;
+  else if(c===","){row.push(f);f=""}
+  else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(f);r.push(row);row=[];f=""}
+  else f+=c}
+ if(f!==""||row.length){row.push(f);r.push(row)}return r}
+function applySheet(csv){try{
+ const rows=parseCSV(csv);if(rows.length<2)return false;
+ const H=rows[0].map(x=>norm(x||"")),ix=k=>H.indexOf(k),iv=ix("variety"),is=ix("section"),il=ix("label"),it=ix("text");
+ if(iv<0||is<0||il<0||it<0)return false;
+ const SEC={"leaf":"leaf","shoot":"shoot","fruit / cluster":"cluster","fruit/cluster":"cluster","cluster":"cluster","fruit":"cluster"},nt={};
+ for(const r of rows.slice(1)){const v=(r[iv]||"").trim(),sec=norm(r[is]||""),lab=(r[il]||"").trim(),tx=(r[it]||"").trim().replace(/\*\*(.+?)\*\*/g,"{{$1}}");
+  if(!v||!tx)continue;const n=resolve(norm(v));if(!n)continue;const o=nt[n]||(nt[n]={});
+  if(sec==="flower"){o.flower=o.flower?o.flower+" "+tx:tx}
+  else if(sec==="differential"){const vs=lab.split("/").map(x=>x.trim()).filter(Boolean);if(vs.length)(o.diff=o.diff||[]).push({v:vs,t:tx})}
+  else if(SEC[sec]&&lab)(o[SEC[sec]]=o[SEC[sec]]||[]).push([lab,tx])}
+ if(!Object.keys(nt).length)return false;
+ for(const n in nt)TR[n]=nt[n];return true}catch(e){return false}}
+(function(){let c=null;try{c=localStorage.getItem(TCACHE)}catch(e){}
+ if(c)applySheet(c);
+ if(typeof fetch!=="function")return;
+ fetch(SHEET_CSV,{cache:"no-cache"}).then(r=>r.ok?r.text():Promise.reject()).then(t=>{if(applySheet(t)){try{localStorage.setItem(TCACHE,t)}catch(e){}}}).catch(()=>{})})();
 </script></body></html>
