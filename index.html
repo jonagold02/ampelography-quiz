@@ -112,7 +112,7 @@ mark.k{background:rgba(255,191,0,.3);color:inherit;border-radius:5px;padding:1px
 <div class="row2"><button id="exp">Show &amp; copy code</button><button id="imp">Load code</button><button id="rst">Reset</button></div></div>
 </section>
 <div id="sheet" class="hide"><div class="sh"><div class="shh"><b id="shT"></b><button id="shX">✕ Close</button></div><div id="shB"></div></div></div>
-<footer class="who">Jonathan Döbler, Viticulture and Enology M.Sc., UC Davis, Fall 2026<br><a href="#" id="fh">Help</a> · <a href="mailto:jdobler@ucdavis.edu?subject=Vineyard%20Finder%20%26%20Quiz">jdobler@ucdavis.edu</a></footer>
+<footer class="who">Jonathan Döbler, Viticulture and Enology M.Sc., UC Davis, Fall 2026<br><a href="#" id="fh">Help</a> · <a href="mailto:jdobler@ucdavis.edu?subject=Vineyard%20Finder%20%26%20Quiz">jdobler@ucdavis.edu</a><br><span id="ds" style="opacity:.6;font-size:.75rem"></span></footer>
 </main>
 <script>
 const RG=[["France","Burgundy",18],["France","Bordeaux",34],["France","Rhône",32],["Germany","",12],["Switzerland","",2],["Austria","",4],["Hungary","",16],["Italy","Northern Italy",28],["Italy","Central Italy",40],["Italy","Southern Italy",18],["Georgia","",2],["South Africa","",2],["Spain","",28],["Portugal","",34],["Middle East","",2],["USA","UC Davis breeding (Olmo)",60],["USA","Hybrids",8]];
@@ -155,11 +155,50 @@ Ruby Seedless*2;-;Early Niabell(?);Niabell*2;Royalty;-;Rubired*2
 Scarlett*2;thomcord*2;-*2;Catawba*2;Chardonel*2`;
 const $=id=>document.getElementById(id);
 const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
-const V=[];let reg=[];
-RG.forEach(([co,rg,c])=>{for(let i=0;i<c;i++)reg.push({co,rg,l:co+(rg?" › "+rg:"")})});
-RW.split("\n").forEach((ln,i)=>{let k=0;ln.split(";").forEach(t=>{const [nm,m]=t.split("*");for(let j=0;j<(+m||1);j++){V.push({row:12+i,vine:++k,c:nm==="-"?"":nm,r:reg[V.length].l,co:reg[V.length].co,rg:reg[V.length].rg})}})});
-const names=[...new Set(V.filter(v=>v.c).map(v=>v.c))].sort((a,b)=>a.localeCompare(b));
-const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+// ---- vineyard map: built-in copy (fallback) + loader for the Google Sheet tab "vineyard_map" ----
+const RMAP={"burgundy":["France","Burgundy"],"bordeaux":["France","Bordeaux"],"loire":["France","Loire"],"rhone":["France","Rhône"],"rhône":["France","Rhône"],"france":["France",""],
+"germany":["Germany",""],"switzerland":["Switzerland",""],"swiss":["Switzerland",""],"austria":["Austria",""],"aust":["Austria",""],"hungary":["Hungary",""],
+"northern italian":["Italy","Northern Italy"],"northern italy":["Italy","Northern Italy"],"central italian":["Italy","Central Italy"],"central italy":["Italy","Central Italy"],
+"s italian/sicily":["Italy","Southern Italy"],"southern italy":["Italy","Southern Italy"],"south italy":["Italy","Southern Italy"],"southern italian":["Italy","Southern Italy"],"italy":["Italy",""],
+"georgia":["Georgia",""],"african":["South Africa",""],"south africa":["South Africa",""],"africa":["South Africa",""],"spanish":["Spain",""],"spain":["Spain",""],"portugal":["Portugal",""],"greece":["Greece",""],
+"middle east":["Middle East",""],"olmo":["USA","UC Davis breeding (Olmo)"],"uc davis breeding (olmo)":["USA","UC Davis breeding (Olmo)"],"hybrids":["USA","Hybrids"],"usa":["USA",""]};
+function mkReg(ps){const cos=[...new Set(ps.map(p=>p[0]))];
+ if(cos.length===1){const rg=ps.map(p=>p[1]).filter(Boolean).join(" / ");return{co:cos[0],rg,l:cos[0]+(rg?" › "+rg:"")}}
+ return{co:cos.join(" / "),rg:"",l:ps.map(p=>p[0]+(p[1]?" › "+p[1]:"")).join(" / ")}}
+function regionOf(lb){if(!lb)return{co:"Unknown region",rg:"",l:"Unknown region"};
+ const one=k=>RMAP[norm(k)],a=one(lb);if(a)return mkReg([a]);
+ const parts=lb.split("/").map(x=>x.trim()).filter(Boolean),ps=parts.map(one);
+ if(parts.length>1&&ps.every(Boolean))return mkReg(ps);
+ return{co:lb,rg:"",l:lb}}
+function parseCSV(t){const r=[];let row=[],f="",q=false;t=t.replace(/^﻿/,"");
+ for(let i=0;i<t.length;i++){const c=t[i];
+  if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+  else if(c==='"')q=true;
+  else if(c===","){row.push(f);f=""}
+  else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(f);r.push(row);row=[];f=""}
+  else f+=c}
+ if(f!==""||row.length){row.push(f);r.push(row)}return r}
+function builtinV(){const V=[],reg=[];
+ RG.forEach(([co,rg,c])=>{for(let i=0;i<c;i++)reg.push({co,rg,l:co+(rg?" › "+rg:"")})});
+ RW.split("\n").forEach((ln,i)=>{let k=0;ln.split(";").forEach(t=>{const [nm,m]=t.split("*");for(let j=0;j<(+m||1);j++){V.push({row:12+i,vine:++k,c:nm==="-"?"":nm,r:reg[V.length].l,co:reg[V.length].co,rg:reg[V.length].rg})}})});
+ return V}
+const BUILTIN_V=builtinV();
+// canonical spelling of existing variety names (saved progress is keyed by these; a sheet typo in case/spaces maps back to them)
+const CANON={};BUILTIN_V.forEach(v=>{if(v.c)CANON[norm(v.c)]=v.c});JOURNAL.forEach(n=>CANON[norm(n)]=n);
+const isEmptyC=s=>{const n=norm(s);return !n||n==="-"||n==="mt"||n==="?"||/^(empty|leer|unknown|none|n\/a)\b/.test(n)};
+function mapFromCSV(csv){try{const rows=parseCSV(csv);let h=-1;
+ for(let i=0;i<Math.min(rows.length,5);i++){const H=rows[i].map(x=>norm(x||""));if(H.includes("row")&&H.includes("vine")&&H.includes("cultivar")){h=i;break}}
+ if(h<0)return null;const H=rows[h].map(x=>norm(x||"")),ir=H.indexOf("region"),iv=H.indexOf("vine"),iw=H.indexOf("row"),ic=H.indexOf("cultivar"),m=new Map();
+ for(const r of rows.slice(h+1)){const row=parseInt(r[iw],10),vine=parseInt(r[iv],10);if(!(row>0&&vine>0))continue;
+  let c=(r[ic]||"").replace(/\s+/g," ").trim();c=isEmptyC(c)?"":(CANON[norm(c)]||c);
+  const g=regionOf((ir>=0?r[ir]||"":"").trim());m.set(row*1000+vine,{row,vine,c,r:g.l,co:g.co,rg:g.rg})}
+ const v=[...m.values()].sort((a,b)=>a.row-b.row||a.vine-b.vine);
+ return v.length>=100&&v.some(x=>x.c)?v:null}catch(e){return null}}
+const MCACHE="vq_map_cache_v1";let MCSV=null,V=BUILTIN_V,DS="Data: built-in copy";
+try{const c=localStorage.getItem(MCACHE),v=c&&mapFromCSV(c);if(v){V=v;MCSV=c;DS="Data: Google Sheet (saved copy)"}}catch(e){}
+const namesOf=v=>[...new Set(v.filter(x=>x.c).map(x=>x.c))].sort((a,b)=>a.localeCompare(b));
+let names=namesOf(V);
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 // Display names only (saved progress always uses the exact variety name from the table; never rename those)
 const DISP={"Cabernet franc":"Cabernet Franc"};const dn=n=>DISP[n]||n;
 // Berry color category (journal varieties), shown next to the name
@@ -175,11 +214,13 @@ $("q").oninput=()=>{const q=norm($("q").value);const out=$("r1");if(!q){out.inne
  out.innerHTML=hit.length?hit.map(n=>{const vs=V.filter(v=>v.c===n);const by={};vs.forEach(v=>(by[v.row]=by[v.row]||[]).push(v.vine));
   return `<div class="res" data-t="${esc(n)}" style="cursor:pointer"><b>${esc(dn(n))}</b>${ALT[n]?` <span class="mu">(${ALT[n].join(", ")})</span>`:""}${JN.has(n)?" 📓":""}${colHTML(n)} <span class="mu">· ${[...new Set(vs.map(v=>v.r))].join(", ")} · ${vs.length} vines</span> <span class="go">Traits ›</span><div>${Object.entries(by).map(([r,a])=>`<span class="chip">Row ${r} · Vine ${a.join(", ")}</span>`).join("")}</div></div>`}).join(""):'<p class="mu">No match.</p>'};
 // find by position
-$("row").innerHTML=[...Array(34)].map((_,i)=>`<option value="${12+i}">Row ${12+i}</option>`).join("");
-$("vine").innerHTML=[...Array(10)].map((_,i)=>`<option value="${i+1}">Vine ${i+1}</option>`).join("");
+function fillPos(){const rs=[...new Set(V.map(v=>v.row))],mv=Math.max(...V.map(v=>v.vine)),a=$("row").value,b=$("vine").value;
+ $("row").innerHTML=rs.map(r=>`<option value="${r}">Row ${r}</option>`).join("");
+ $("vine").innerHTML=[...Array(mv)].map((_,i)=>`<option value="${i+1}">Vine ${i+1}</option>`).join("");
+ if(rs.map(String).includes(a))$("row").value=a;if(b&&+b<=mv)$("vine").value=b;pos()}
 function pos(){const v=V.find(x=>x.row==$("row").value&&x.vine==$("vine").value);
  $("r2").innerHTML=v?(v.c?`<div data-t="${esc(v.c)}" style="cursor:pointer">${esc(dn(v.c))}${colHTML(v.c)}<div class="mu" style="font-size:.9rem;font-weight:400">${v.r}</div><div class="go">Identification traits ›</div></div>`:'<span class="mu">empty / unknown</span>'):""}
-$("row").onchange=$("vine").onchange=pos;pos();
+$("row").onchange=$("vine").onchange=pos;fillPos();
 // traits
 // Traits per variety (key = exact variety name in the table).
 // Sections: leaf, shoot, cluster = [["Label","text"],...]; flower = "text"; diff = [{v:["other variety"],t:"text"}].
@@ -364,11 +405,11 @@ $("imp").onclick=()=>{try{const o=JSON.parse($("bk").value);if(!o||typeof o!=="o
 $("rst").onclick=()=>{if(confirm("Delete all progress?")){P={};save();renderProg();selSum()}};
 // quiz setup
 const sel=new Set(JOURNAL);
-function drawRegs(){const cs=[...new Set(RG.map(r=>r[0]))];
-$("regs").innerHTML=cs.map(co=>{const rs=RG.filter(r=>r[0]===co);
+function drawRegs(){const G=new Map();V.forEach(v=>{if(!G.has(v.co))G.set(v.co,[]);const a=G.get(v.co);if(!a.includes(v.rg))a.push(v.rg)});
+$("regs").innerHTML=[...G].map(([co,rs])=>{
  const sub=f=>[...new Set(V.filter(f).map(v=>v.c).filter(Boolean))].sort().map(n=>`<label><input type="checkbox" style="width:auto" data-n="${esc(n)}" ${sel.has(n)?"checked":""}> ${esc(dn(n))}${JN.has(n)?" 📓":""}</label>`).join("");
- const bt=(rg)=>`<small><button data-co="${co}"${rg?` data-rg="${rg}"`:""} data-m="1">all</button><button data-co="${co}"${rg?` data-rg="${rg}"`:""} data-m="0">none</button></small>`;
- return `<div class="reg"><b>${co}</b>${bt("")}`+(rs.length>1||rs[0][1]?rs.map(([,rg])=>`<div style="margin:6px 0 0 10px"><span class="mu">${rg}</span>${bt(rg)}<div>${sub(v=>v.co===co&&v.rg===rg)}</div></div>`).join(""):`<div>${sub(v=>v.co===co)}</div>`)+`</div>`}).join("");selSum()}
+ const bt=(rg)=>`<small><button data-co="${esc(co)}"${rg?` data-rg="${esc(rg)}"`:""} data-m="1">all</button><button data-co="${esc(co)}"${rg?` data-rg="${esc(rg)}"`:""} data-m="0">none</button></small>`;
+ return `<div class="reg"><b>${esc(co)}</b>${bt("")}`+(rs.length>1||rs[0]?rs.map(rg=>`<div style="margin:6px 0 0 10px"><span class="mu">${esc(rg||"other")}</span>${bt(rg)}<div>${sub(v=>v.co===co&&v.rg===rg)}</div></div>`).join(""):`<div>${sub(v=>v.co===co)}</div>`)+`</div>`}).join("");selSum()}
 drawRegs();
 $("regs").onchange=e=>{const n=e.target.dataset.n;if(n!=null)e.target.checked?sel.add(n):sel.delete(n);selSum()};
 $("regs").onclick=e=>{const d=e.target.dataset;if(!d.co)return;V.filter(v=>v.c&&v.co===d.co&&(d.rg==null||v.rg===d.rg)).forEach(v=>d.m==="1"?sel.add(v.c):sel.delete(v.c));drawRegs()};
@@ -380,7 +421,7 @@ $("none").onclick=()=>{sel.clear();drawRegs()};
 let cur=null,last=null,qn=0,ok=0,done=false,hinted=false,incl=false;
 const weight=n=>{const p=P[n];if(!p||!p.n)return 3;return[4,3,2,1.5,1][Math.min(p.s,4)]*(1+p.w/p.n)};
 const left=()=>[...sel].filter(n=>status(n)<3).length;
-function pick(){let c=[...sel].filter(n=>incl||status(n)<3);if(c.length>1)c=c.filter(n=>n!==last);if(!c.length)return null;
+function pick(){let c=[...sel].filter(n=>V.some(v=>v.c===n)&&(incl||status(n)<3));if(c.length>1)c=c.filter(n=>n!==last);if(!c.length)return null;
  let r=Math.random()*c.reduce((a,n)=>a+weight(n),0);const n=c.find(n=>(r-=weight(n))<=0)||c[0];last=n;
  const vs=V.filter(v=>v.c===n);return vs[Math.random()*vs.length|0]}
 function ui(){["chk","hint"].forEach(x=>{$(x).classList.remove("hide");$(x).disabled=false});$("dd").onchange()}
@@ -418,31 +459,39 @@ const vv=window.visualViewport,kb=()=>document.documentElement.style.setProperty
 if(vv){vv.addEventListener("resize",kb);vv.addEventListener("scroll",kb)}
 new ResizeObserver(()=>{document.body.style.paddingBottom=$("bar").offsetHeight+"px"}).observe($("bar"));
 
-// ---- Live trait descriptors from Google Sheet (published CSV). Built-in TR stays as fallback. Progress storage is untouched. ----
-const SHEET_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTeeikdxSEgxgN7W2Lr5Pz3wirq-jiKmRTwhFX3FDC7Lny-OP8UhPJAXd5606LNi_SuDHCGaOfhfLfW/pub?output=csv";
-const TCACHE="vq_traits_cache_v1";
-function parseCSV(t){const r=[];let row=[],f="",q=false;t=t.replace(/^﻿/,"");
- for(let i=0;i<t.length;i++){const c=t[i];
-  if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
-  else if(c==='"')q=true;
-  else if(c===","){row.push(f);f=""}
-  else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(f);r.push(row);row=[];f=""}
-  else f+=c}
- if(f!==""||row.length){row.push(f);r.push(row)}return r}
-function applySheet(csv){try{
- const rows=parseCSV(csv);if(rows.length<2)return false;
- const H=rows[0].map(x=>norm(x||"")),ix=k=>H.indexOf(k),iv=ix("variety"),is=ix("section"),il=ix("label"),it=ix("text");
- if(iv<0||is<0||il<0||it<0)return false;
+// ---- Live data from the Google Sheet (tabs: cultivar_trait_collection = traits, vineyard_map = rows/vines/varieties/regions).
+// The built-in data above stays as fallback. Progress storage is never touched. ----
+const SHEET_ID="1uxDajPAZWPrA1gkmGmm5K0q-YwUTNyeF3xhQsyTuxwM";
+const gviz=tab=>"https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?tqx=out:csv&sheet="+encodeURIComponent(tab);
+const TRAITS_URLS=[gviz("cultivar_trait_collection"),"https://docs.google.com/spreadsheets/d/e/2PACX-1vTeeikdxSEgxgN7W2Lr5Pz3wirq-jiKmRTwhFX3FDC7Lny-OP8UhPJAXd5606LNi_SuDHCGaOfhfLfW/pub?output=csv"];
+const MAP_URLS=[gviz("vineyard_map")];
+const TCACHE="vq_traits_cache_v1",BASE_TR=JSON.parse(JSON.stringify(TR));let TCSV=null;
+function applyTraits(csv){try{
+ const rows=parseCSV(csv);let h=-1;
+ for(let i=0;i<Math.min(rows.length,5);i++){const H=rows[i].map(x=>norm(x||""));if(H.includes("variety")&&H.includes("section")&&H.includes("label")&&H.includes("text")){h=i;break}}
+ if(h<0)return false;
+ const H=rows[h].map(x=>norm(x||"")),iv=H.indexOf("variety"),is=H.indexOf("section"),il=H.indexOf("label"),it=H.indexOf("text");
  const SEC={"leaf":"leaf","shoot":"shoot","fruit / cluster":"cluster","fruit/cluster":"cluster","cluster":"cluster","fruit":"cluster"},nt={};
- for(const r of rows.slice(1)){const v=(r[iv]||"").trim(),sec=norm(r[is]||""),lab=(r[il]||"").trim(),tx=(r[it]||"").trim().replace(/\*\*(.+?)\*\*/g,"{{$1}}");
+ for(const r of rows.slice(h+1)){const v=(r[iv]||"").trim(),sec=norm(r[is]||""),lab=(r[il]||"").trim(),tx=(r[it]||"").trim().replace(/\*\*(.+?)\*\*/g,"{{$1}}");
   if(!v||!tx)continue;const n=resolve(norm(v));if(!n)continue;const o=nt[n]||(nt[n]={});
   if(sec==="flower"){o.flower=o.flower?o.flower+" "+tx:tx}
   else if(sec==="differential"){const vs=lab.split("/").map(x=>x.trim()).filter(Boolean);if(vs.length)(o.diff=o.diff||[]).push({v:vs,t:tx})}
   else if(SEC[sec]&&lab)(o[SEC[sec]]=o[SEC[sec]]||[]).push([lab,tx])}
  if(!Object.keys(nt).length)return false;
+ for(const k of Object.keys(TR))delete TR[k];
+ Object.assign(TR,JSON.parse(JSON.stringify(BASE_TR)));
  for(const n in nt)TR[n]=nt[n];return true}catch(e){return false}}
-(function(){let c=null;try{c=localStorage.getItem(TCACHE)}catch(e){}
- if(c)applySheet(c);
- if(typeof fetch!=="function")return;
- fetch(SHEET_CSV,{cache:"no-cache"}).then(r=>r.ok?r.text():Promise.reject()).then(t=>{if(applySheet(t)){try{localStorage.setItem(TCACHE,t)}catch(e){}}}).catch(()=>{})})();
+const setDS=()=>{const e=$("ds");if(e)e.textContent=DS};
+function refreshAll(){for(const n of [...sel])if(!names.includes(n))sel.delete(n);
+ if(TCSV)applyTraits(TCSV);fillPos();drawRegs();$("q").oninput();if(!$("p3").classList.contains("hide"))renderProg();setDS()}
+async function getCSV(urls){for(const u of urls){try{const r=await fetch(u,{cache:"no-cache"});if(!r.ok)continue;const t=await r.text();if(t&&!/^\s*<(!doctype|html)/i.test(t))return t}catch(e){}}return null}
+async function syncSheet(){if(typeof fetch!=="function")return;
+ const [t,m]=await Promise.all([getCSV(TRAITS_URLS),getCSV(MAP_URLS)]);let changed=false;
+ if(m){const v=mapFromCSV(m);if(v){if(m!==MCSV){V=v;names=namesOf(V);MCSV=m;changed=true;try{localStorage.setItem(MCACHE,m)}catch(e){}}DS="Data: Google Sheet · live"}}
+ if(t&&t!==TCSV&&applyTraits(t)){TCSV=t;changed=true;try{localStorage.setItem(TCACHE,t)}catch(e){}}
+ if(changed){if($("game").classList.contains("hide"))refreshAll();else DS="Data: Google Sheet · updates apply after this quiz"}
+ setDS()}
+try{TCSV=localStorage.getItem(TCACHE)}catch(e){}
+if(TCSV&&!applyTraits(TCSV))TCSV=null;
+setDS();syncSheet();
 </script></body></html>
